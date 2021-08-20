@@ -7,10 +7,7 @@ Created on Wed Mar 17 18:24:16 2021
 from tensorflow import keras
 import tensorflow as tf
 from tensorflow.keras import layers
-import numpy as np
-import scipy.io
-import pickle
-import NSMutils as m_util
+import builder_transformer as trans_builder
 
 def build_Conv3D(filters = 5, kernel = 3, dense = 256, numClass = 9, dropoutrate = 0.5):
     model = keras.models.Sequential([
@@ -250,4 +247,12 @@ def build_Img_TConv_TD(numClass):
         inputs = m_input,
         outputs = m_output,
     )
+    return model
+
+def build_Conv_Trans(num_heads = 8, dff = 64, numClass = 47, d_model = 64,
+                     dropoutrate = 0.2, conv_filters = 10, conv_kernel = 5):
+    model = trans_builder.build_Conv_Trans(num_heads = num_heads, dff = dff, 
+                                               numClass = numClass, d_model = d_model,
+                                               dropoutrate = dropoutrate, conv_filters = conv_filters, 
+                                               conv_kernel = conv_kernel)
     return model

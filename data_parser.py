@@ -6,7 +6,7 @@ Created on Wed Aug  4 11:07:49 2021
 """
 
 import numpy as np
-import NSMutils as tools
+import toolbox as tools
 
 def read_frame(filename, index, lineindex):
     indexlist = np.genfromtxt(lineindex,delimiter=',',dtype=np.longlong)

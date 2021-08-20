@@ -13,6 +13,7 @@ from tensorflow import keras
 from datetime import datetime
 import logging
 import subprocess, os, sys
+import tensorflow as tf
 
 def tf_setup_GPU(ind=0):
     gpus = tf.config.experimental.list_physical_devices('GPU')
