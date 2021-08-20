@@ -26,13 +26,13 @@ tools.tf_setup_GPU()
 #tools.tf_mem_patch()
 numClass = 9
 out_Session = 3
-plim = 13 # 7 for 6 people (64GB RAM), 13 for all 12 people (needs 128GB RAM)
+plim = 13 # 7 for 6 people (64GB RAM), 13 for all 12 people (needs 128GB RAM), 2 for 1 person with quick test
 
 params = {'batch_size': 100, 'shuffle': True, 'n_classes': numClass}
 params['dim'] = (128, 64, 50)
 params['n_channels'] = 1
 params['datapath'] = '../Data/SessionCSV/'
-params['labelpath']='../Data/labels_50_10/'
+params['labelpath']='../Data/labels_50_10/' # _50_5 or _50_10
 out_path = '../Outputs/'
 
 

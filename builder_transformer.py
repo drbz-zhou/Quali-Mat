@@ -171,7 +171,9 @@ class MultiHeadAttention(tf.keras.layers.Layer):
 class EncoderLayer(tf.keras.layers.Layer):
   def __init__(self, d_model, num_heads, dff, rate=0.1):
     super(EncoderLayer, self).__init__()
-
+    self.d_model = d_model
+    self.num_heads = num_heads
+    self.dff = dff
     self.mha = MultiHeadAttention(d_model, num_heads)
     self.ffn = point_wise_feed_forward_network(d_model, dff)
 
@@ -180,6 +182,14 @@ class EncoderLayer(tf.keras.layers.Layer):
 
     self.dropout1 = tf.keras.layers.Dropout(rate)
     self.dropout2 = tf.keras.layers.Dropout(rate)
+  def get_config(self):
+    config = super().get_config().copy()
+    config.update({
+        'd_model': self.d_model,
+        'num_heads': self.num_heads,
+        'dff': self.dff,
+    })
+    return config
 
   def call(self, x, training, mask):
     #print("x in encoder: "+str(x.shape))
@@ -195,20 +205,34 @@ class EncoderLayer(tf.keras.layers.Layer):
     return out2
 
 class Encoder(tf.keras.layers.Layer):
-  def __init__(self, num_layers, d_model, num_heads, dff, rate=0.1):
+  def __init__(self, num_layers, d_model, num_heads, dff, rate=0.1, pos_dim = [8,4,5,5]):
     super(Encoder, self).__init__()
 
     self.d_model = d_model
     self.num_layers = num_layers
-    self.pos_tf = positional_encoding_4d(8,4,5,5,d_model)
-    self.embedding = tf.keras.layers.Embedding(5120, d_model)  #depends on the volume
+    self.num_heads = num_heads
+    self.dff = dff
+    self.pos_dim  = pos_dim
+    self.pos_tf = positional_encoding_4d(pos_dim[0],pos_dim[1],pos_dim[2],pos_dim[3],d_model)
+    self.exp_dim = tf.keras.layers.Reshape( (pos_dim[0]*pos_dim[1]*pos_dim[2]*pos_dim[3],1) )  #need to be same as positional encoding
+    self.embedding = tf.keras.layers.Conv1D(filters = d_model, kernel_size=5, padding='same', activation='relu')
     self.enc_layers = [EncoderLayer(d_model, num_heads, dff, rate)
                        for _ in range(num_layers)]
 
     self.dropout = tf.keras.layers.Dropout(rate)
-
+  def get_config(self):
+    config = super().get_config().copy()
+    config.update({
+        'num_layers': self.num_layers,
+        'd_model': self.d_model,
+        'num_heads': self.num_heads,
+        'dff': self.dff,
+        'pos_dim': self.pos_dim,
+    })
+    return config
   def call(self, x, training, mask):
     # adding embedding and position encoding.    
+    x = self.exp_dim(x)
     x = self.embedding(x)  # (batch_size, input_seq_len, d_model)
     x *= tf.math.sqrt(tf.cast(self.d_model, tf.float32))
     x += self.pos_tf[:,:,:]
@@ -240,14 +264,14 @@ def build_Conv_Trans(num_heads = 8, dff = 64, numClass = 47, d_model = 64,
     m_output = layers.BatchNormalization()(m_output)
     m_output = layers.AveragePooling3D(pool_size=(2, 2, 1))(m_output)
     m_output = layers.Dropout(dropoutrate)(m_output)
-    print(m_output.shape)       
-
+    print(m_output.shape[1:].as_list())       
+    pos_dim = m_output.shape[1:].as_list()
     #m_output = m_input# + pos_tf
     #print("input: "+str(m_output.shape))
     m_output = layers.Flatten()(m_output)
     print("m_output before encoder: "+str(m_output.shape))
     #m_output = EncoderLayer(d_model = d_model, num_heads=num_heads, dff=dff)(m_output, False, None)
-    m_output = Encoder(num_layers = 5, d_model = d_model, num_heads=num_heads, dff=dff)(m_output, False, None)
+    m_output = Encoder(num_layers = 5, d_model = d_model, num_heads=num_heads, dff=dff, pos_dim=pos_dim)(m_output, False, None)
 
     #print("m_output after encoder: "+str(m_output.shape))
     #m_output = layers.AveragePooling1D( pool_size = 5, strides= 5 )(m_output)
