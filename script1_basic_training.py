@@ -25,16 +25,17 @@ import data_parser as parser
 tools.tf_setup_GPU()
 #tools.tf_mem_patch()
 numClass = 47
-bathsize = 200
 out_Session = 3
 plim = 7 # 7 for 6 people (64GB RAM), 13 for all 12 people (needs 128GB RAM)
 
-out_path = '../Outputs/'
-params = {'batch_size': bathsize, 'shuffle': True, 'n_classes': numClass}
+params = {'batch_size': 200, 'shuffle': True, 'n_classes': numClass}
 params['dim'] = (128, 64, 50)
 params['n_channels'] = 1
 params['datapath'] = '../Data/SessionCSV/'
 params['labelpath']='../Data/labels_50_10/'
+params['out_path'] = '../Outputs/'
+
+
 f=np.load(params['labelpath']+'LabelMeta'+str(numClass)+'.npz')
 label_lens=f['arr_0']
 Meta_Ind = f['arr_1'] # P, R, Slices, y-47, y-9
@@ -43,10 +44,9 @@ if numClass == 9:
 elif numClass == 47:
     labels=Meta_Ind[:,3]  #3-47, 4-9
     
-#train_list = np.arange(12807).tolist()
-#test_list = np.arange(12808,18216).tolist()#
 
 # leave session out
+# select the training and testing indexes based on person, recording and class conditions
 train_list = np.where( (Meta_Ind[:,1]!=out_Session) & (Meta_Ind[:,0]<plim) )[0].tolist()
 test_list = np.where( (Meta_Ind[:,1]==out_Session)  & (Meta_Ind[:,0]<plim) )[0].tolist()
 
@@ -116,15 +116,16 @@ patience= 50
 
 # train model
 model, history = tools.train_gen(
-    model, epoch, train_gen, valid_gen, modelsavefile, patience, Batch_size=bathsize)
+    model, epoch, train_gen, valid_gen, modelsavefile, patience, Batch_size=params['batch_size'])
 acc, val_acc, loss, val_loss = tools.append_history(
     history, acc, val_acc, loss, val_loss)
 
 tools.print_time()
 #%% test model
 model.load_weights(modelsavefile) #model needs to be built first 
-params['batch_size'] = 1
-params['shuffle'] = False
+params_test = params
+params_test['batch_size'] = 1
+params_test['shuffle'] = False
 # load testing data into memory
 print('load testing data')
 del train_gen
@@ -149,8 +150,8 @@ cm = confusion_matrix(m_y_test, np.argmax(m_y_pred, axis=1))
 print(acc_test)
 print(cm)
 #%%
-tools.plot_confusion_matrix(cm, range(1, numClass+1), file_path = out_path + model_arch + '_' + \
+tools.plot_confusion_matrix(cm, range(1, numClass+1), file_path = params['out_path'] + model_arch + '_' + \
         str(numClass) + '_LO' + str(out_Session)+'_')
-tools.plot_acc_loss(acc, val_acc, loss, val_loss, file_path = out_path + model_arch + '_' + \
+tools.plot_acc_loss(acc, val_acc, loss, val_loss, file_path = params['out_path'] + model_arch + '_' + \
         str(numClass) + '_LO' + str(out_Session)+'_')
     
