@@ -174,7 +174,7 @@ class EncoderLayer(tf.keras.layers.Layer):
     self.d_model = d_model
     self.num_heads = num_heads
     self.dff = dff
-    self.mha = MultiHeadAttention(d_model, num_heads)
+    self.mha = tf.keras.layers.MultiHeadAttention(num_heads=num_heads, key_dim=d_model)#MultiHeadAttention(d_model, num_heads)
     self.ffn = point_wise_feed_forward_network(d_model, dff)
 
     self.layernorm1 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
@@ -193,7 +193,7 @@ class EncoderLayer(tf.keras.layers.Layer):
 
   def call(self, x, training, mask):
     #print("x in encoder: "+str(x.shape))
-    attn_output, _ = self.mha(x, x, x, mask)  # (batch_size, input_seq_len, d_model)
+    attn_output, _ = self.mha(x, x, return_attention_scores=True)#, x, return_attention_scores=True)  # (batch_size, input_seq_len, d_model)
     attn_output = self.dropout1(attn_output, training=training)
     #print("attn_output in encoder: "+str(attn_output.shape))
     out1 = self.layernorm1(x + attn_output)  # (batch_size, input_seq_len, d_model)

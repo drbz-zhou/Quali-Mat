@@ -86,7 +86,7 @@ loss = []
 val_loss = []
 epoch = 10000
 modelsavefile = '../Outputs/model_'+model_arch+'_'+str(numClass)+'.h5'
-patience= 50
+patience= 40
 
 #%% leave session out
 # select the training and testing indexes based on person, recording and class conditions
