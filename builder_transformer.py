@@ -248,19 +248,19 @@ def build_Conv_Trans(num_heads = 8, dff = 64, numClass = 47, d_model = 64,
                      dropoutrate = 0.2, conv_filters = 5, conv_kernel = 5):
     #m_input = tf.random.uniform((4, 32, 16, 8,1), dtype=tf.float32, minval=0, maxval=200)
     m_input = keras.Input(shape = (128, 64, 50, 1))
-    m_output =layers.Conv3D( filters = conv_filters, kernel_size = conv_kernel, padding='same', activation='relu', input_shape=(128, 64 ,50, 1))(m_input)        
+    m_output = layers.Conv3D( filters = conv_filters, kernel_size = conv_kernel, padding='same', activation='relu', input_shape=(128, 64 ,50, 1))(m_input)        
     m_output = layers.BatchNormalization()(m_output)
     m_output = layers.AveragePooling3D(pool_size=(2, 2, 3))(m_output)
     m_output = layers.Dropout(dropoutrate)(m_output)
-    m_output =layers.Conv3D( filters = conv_filters, kernel_size = conv_kernel, padding='same', activation='relu')(m_output)        
+    m_output = layers.Conv3D( filters = conv_filters, kernel_size = conv_kernel, padding='same', activation='relu')(m_output)        
     m_output = layers.BatchNormalization()(m_output)
     m_output = layers.AveragePooling3D(pool_size=(2, 2, 3))(m_output)
     m_output = layers.Dropout(dropoutrate)(m_output)
-    m_output =layers.Conv3D( filters = conv_filters, kernel_size = conv_kernel, padding='same', activation='relu')(m_output)        
+    m_output = layers.Conv3D( filters = conv_filters, kernel_size = conv_kernel, padding='same', activation='relu')(m_output)        
     m_output = layers.BatchNormalization()(m_output)
     m_output = layers.AveragePooling3D(pool_size=(2, 2, 1))(m_output)
     m_output = layers.Dropout(dropoutrate)(m_output)
-    m_output =layers.Conv3D( filters = conv_filters, kernel_size = conv_kernel, padding='same', activation='relu')(m_output)        
+    m_output = layers.Conv3D( filters = conv_filters, kernel_size = conv_kernel, padding='same', activation='relu')(m_output)        
     m_output = layers.BatchNormalization()(m_output)
     m_output = layers.AveragePooling3D(pool_size=(2, 2, 1))(m_output)
     m_output = layers.Dropout(dropoutrate)(m_output)
@@ -282,6 +282,61 @@ def build_Conv_Trans(num_heads = 8, dff = 64, numClass = 47, d_model = 64,
     m_output = layers.Dropout(dropoutrate)(m_output)
     m_output = layers.BatchNormalization()(m_output)
     m_output = layers.Dense(64, activation='relu')(m_output)
+    #m_output = layers.Dropout(0.2)(m_output)
+    m_output = layers.Dense(numClass, activation = 'softmax')(m_output)
+
+    model = keras.Model(
+    inputs = m_input,
+    outputs = m_output,
+    )
+    return model
+
+def build_Conv_Trans_w9(num_heads = 8, dff = 64, numClass = 47, d_model = 64,
+                     dropoutrate = 0.2, conv_filters = 5, conv_kernel = 5, 
+                     model_9_path = '../Outputs/TrainedModels/modelweight_Conv_Trans_9.h5'):
+    #m_input = tf.random.uniform((4, 32, 16, 8,1), dtype=tf.float32, minval=0, maxval=200)
+    m_input = keras.Input(shape = (128, 64, 50, 1))
+    m_output = layers.Conv3D( filters = conv_filters, kernel_size = conv_kernel, padding='same', activation='relu', input_shape=(128, 64 ,50, 1))(m_input)        
+    m_output = layers.BatchNormalization()(m_output)
+    m_output = layers.AveragePooling3D(pool_size=(2, 2, 3))(m_output)
+    m_output = layers.Dropout(dropoutrate)(m_output)
+    m_output = layers.Conv3D( filters = conv_filters, kernel_size = conv_kernel, padding='same', activation='relu')(m_output)        
+    m_output = layers.BatchNormalization()(m_output)
+    m_output = layers.AveragePooling3D(pool_size=(2, 2, 3))(m_output)
+    m_output = layers.Dropout(dropoutrate)(m_output)
+    m_output = layers.Conv3D( filters = conv_filters, kernel_size = conv_kernel, padding='same', activation='relu')(m_output)        
+    m_output = layers.BatchNormalization()(m_output)
+    m_output = layers.AveragePooling3D(pool_size=(2, 2, 1))(m_output)
+    m_output = layers.Dropout(dropoutrate)(m_output)
+    m_output = layers.Conv3D( filters = conv_filters, kernel_size = conv_kernel, padding='same', activation='relu')(m_output)        
+    m_output = layers.BatchNormalization()(m_output)
+    m_output = layers.AveragePooling3D(pool_size=(2, 2, 1))(m_output)
+    m_output = layers.Dropout(dropoutrate)(m_output)
+    print(m_output.shape[1:].as_list())       
+    pos_dim = m_output.shape[1:].as_list()
+    #m_output = m_input# + pos_tf
+    #print("input: "+str(m_output.shape))
+    m_output = layers.Flatten()(m_output)
+    print("m_output before encoder: "+str(m_output.shape))
+    #m_output = EncoderLayer(d_model = d_model, num_heads=num_heads, dff=dff)(m_output, False, None)
+    m_output = Encoder(num_layers = 5, d_model = d_model, num_heads=num_heads, dff=dff, pos_dim=pos_dim)(m_output, False, None)
+
+    #print("m_output after encoder: "+str(m_output.shape))
+    #m_output = layers.AveragePooling1D( pool_size = 5, strides= 5 )(m_output)
+    m_output = layers.LocallyConnected1D(filters = 8, kernel_size = 5, strides= 5)(m_output)
+    #m_output = layers.Permute(dims = (2,1))(m_output)
+    m_output = layers.Flatten()(m_output)
+    #print("m_output after flatten: "+str(m_output.shape))
+    m_output = layers.Dropout(dropoutrate)(m_output)
+    m_output = layers.BatchNormalization()(m_output)
+    m_output = layers.Dense(64, activation='relu')(m_output)
+    
+    model_9 = build_Conv_Trans(num_heads = 8, dff = 32, numClass = 9, d_model = 32,
+                     dropoutrate = 0.2, conv_filters = 5, conv_kernel = 3)
+    model_9.load_weights(model_9_path)
+    model_9.trainable=False
+    m_output = layers.Concatenate()([m_output, model_9(m_input)])
+    
     #m_output = layers.Dropout(0.2)(m_output)
     m_output = layers.Dense(numClass, activation = 'softmax')(m_output)
 

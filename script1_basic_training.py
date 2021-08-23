@@ -24,7 +24,7 @@ import data_parser as parser
 # setup GPU
 tools.tf_setup_GPU()
 #tools.tf_mem_patch()
-numClass = 9
+numClass = 47
 out_Session = 3
 plim = 13 # 7 for 6 people (64GB RAM), 13 for all 12 people (needs 128GB RAM), 2 for 1 person with quick test
 
@@ -59,7 +59,7 @@ tools.print_time()
 #mDataExample=train_gen.__data_generation([10])
 #model = model_builder.build_Conv3D(filters=5, kernel=3, dense=256, numClass=numClass)
 #model = model_builder.build_TConv_Incpt(filters = 5, kernel = (1,1,3), fine_tune_at = 500, numClass = numClass)
-model_arch="Conv_Trans"
+model_arch="Conv_Trans_w9"
 if model_arch=="Conv3D":
     model = model_builder.build_Conv3D(
         filters=5, kernel=5, dense=512, numClass=numClass, dropoutrate = 0.5)
@@ -72,6 +72,9 @@ elif model_arch=="Img_Tconv_TD":
     model = model_builder.build_Img_TConv_TD(numClass=numClass)
 elif model_arch=="Conv_Trans":
     model = model_builder.build_Conv_Trans(num_heads = 8, dff = 32, numClass = numClass, d_model = 32,
+                     dropoutrate = 0.2, conv_filters = 5, conv_kernel = 3)
+elif model_arch=="Conv_Trans_w9":  #with model 9 as the category restrictor, numClass should be 47
+    model = model_builder.build_Conv_Trans_w9(num_heads = 8, dff = 32, numClass = numClass, d_model = 32,
                      dropoutrate = 0.2, conv_filters = 5, conv_kernel = 3)
     
 m_opt = keras.optimizers.Adam(learning_rate=0.0001)
@@ -124,7 +127,7 @@ acc, val_acc, loss, val_loss = tools.append_history(
     history, acc, val_acc, loss, val_loss)
 
 tools.print_time()
-#%% test model
+#% test model
 model.load_weights(modelsavefile) #model needs to be built first 
 params_test = params
 params_test['batch_size'] = 1
@@ -152,7 +155,7 @@ acc_test = sum(m_y_test == np.argmax(m_y_pred, axis=1)) / m_y_test.shape[0]
 cm = confusion_matrix(m_y_test, np.argmax(m_y_pred, axis=1))
 print(acc_test)
 print(cm)
-#%%
+#%
 tools.plot_confusion_matrix(cm, range(1, numClass+1), file_path = out_path + model_arch + '_' + \
         str(numClass) + '_LO' + str(out_Session)+'_')
 tools.plot_acc_loss(acc, val_acc, loss, val_loss, file_path = out_path + model_arch + '_' + \
