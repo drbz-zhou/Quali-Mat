@@ -2,7 +2,7 @@
 """
 Created on Tue Aug 10 10:20:23 2021
 
-@author: fredr
+@author: bzhou
 """
 
 #!/usr/bin/env python3
@@ -32,6 +32,7 @@ params = {'batch_size': 100, 'shuffle': True, 'n_classes': numClass}
 params['dim'] = (128, 64, 50)
 params['n_channels'] = 1
 params['datapath'] = '../Data/SessionCSV/'
+params['y_offset']=1  #first label is 1 instead of 0
 params['labelpath']='../Data/labels_50_10/' # _50_5 or _50_10
 out_path = '../Outputs/'
 
@@ -43,8 +44,38 @@ if numClass == 9:
     labels=Meta_Ind[:,4]  #3-47, 4-9
 elif numClass == 47:
     labels=Meta_Ind[:,3]  #3-47, 4-9
-    
 
+#%% load training data into memory
+print('load training data')
+mDataDict = {}
+for P in range(1,plim): #1,13
+    for R in range(1,4): # 1,4
+        #if R!= out_Session:
+            datastr = 'P'+str(P)+'R'+str(R)
+            filename = params['datapath'] + datastr + '.npy'
+            print(datastr)
+            mDataDict[datastr]=np.load(filename)
+# load slice label and frame index data into memory
+mSliceDict = {}
+for P in range(1,plim):
+    for R in range(1,4):
+        datastr = 'P'+str(P)+'R'+str(R)
+        mSliceDict[datastr]=np.genfromtxt(
+            params['labelpath']+datastr+'_label_'+str(numClass)+'b.csv', delimiter=',',dtype=int)
+        
+#%% leave session out
+# select the training and testing indexes based on person, recording and class conditions
+#train_list = np.where( (Meta_Ind[:,1]!=out_Session) & (Meta_Ind[:,0]<plim) )[0].tolist()
+#test_list = np.where( (Meta_Ind[:,1]==out_Session)  & (Meta_Ind[:,0]<plim) )[0].tolist()
+train_list = np.where( (Meta_Ind[:,1]!=out_Session) & 
+                      (Meta_Ind[:,0]<plim) )[0].tolist()
+test_list = np.where( (Meta_Ind[:,1]==out_Session)  & 
+                     (Meta_Ind[:,0]<plim) )[0].tolist()
+
+test_subind, valid_subind = tools.train_valid_split_jump(np.array(test_list), 10)  #train_list
+train_list_ind = train_list#np.array(train_list)[train_subind].tolist()
+valid_list_ind = np.array(test_list)[valid_subind].tolist()  #train_list
+test_list_ind = np.array(test_list)[test_subind].tolist()
 
 tools.print_time()
 #for i in range(10):
@@ -59,13 +90,13 @@ tools.print_time()
 #mDataExample=train_gen.__data_generation([10])
 #model = model_builder.build_Conv3D(filters=5, kernel=3, dense=256, numClass=numClass)
 #model = model_builder.build_TConv_Incpt(filters = 5, kernel = (1,1,3), fine_tune_at = 500, numClass = numClass)
-model_arch="Conv_Trans_w9"
+model_arch="Conv_Trans"
 if model_arch=="Conv3D":
     model = model_builder.build_Conv3D(
         filters=5, kernel=5, dense=512, numClass=numClass, dropoutrate = 0.5)
 elif model_arch=="TConv_Imgnet":
     model = model_builder.build_TConv_Imgnet(
-        filters = 5, kernel = (1,1,3), fine_tune_at = 200, numClass = numClass, imag_model = 'EfficientNetB0')
+        filters = 5, kernel = (1,1,3), fine_tune_at = 200, numClass =numClass, imag_model = 'EfficientNetB0')
 elif model_arch=="Img_Tconv":
     model = model_builder.build_Img_TConv(numClass=numClass)
 elif model_arch=="Img_Tconv_TD":
@@ -91,32 +122,6 @@ epoch = 10000
 modelsavefile = '../Outputs/model_'+model_arch+'_'+str(numClass)+'.h5'
 patience= 40
 
-#%% leave session out
-# select the training and testing indexes based on person, recording and class conditions
-train_list = np.where( (Meta_Ind[:,1]!=out_Session) & (Meta_Ind[:,0]<plim) )[0].tolist()
-test_list = np.where( (Meta_Ind[:,1]==out_Session)  & (Meta_Ind[:,0]<plim) )[0].tolist()
-
-test_subind, valid_subind = tools.train_valid_split_jump(np.array(test_list), 10)  #train_list
-train_list_ind = train_list#np.array(train_list)[train_subind].tolist()
-valid_list_ind = np.array(test_list)[valid_subind].tolist()  #train_list
-test_list_ind = np.array(test_list)[test_subind].tolist()
-# load training data into memory
-print('load training data')
-mDataDict = {}
-for P in range(1,plim): #1,13
-    for R in range(1,4): # 1,4
-        #if R!= out_Session:
-            datastr = 'P'+str(P)+'R'+str(R)
-            filename = params['datapath'] + datastr + '.npy'
-            print(datastr)
-            mDataDict[datastr]=np.load(filename)
-# load slice label and frame index data into memory
-mSliceDict = {}
-for P in range(1,13):
-    for R in range(1,4):
-        datastr = 'P'+str(P)+'R'+str(R)
-        mSliceDict[datastr]=np.genfromtxt(
-            params['labelpath']+datastr+'_label_'+str(numClass)+'b.csv', delimiter=',',dtype=int)
 #%%            
 train_gen = DataGenerator_mem(train_list_ind, datadict=mDataDict, Meta_Ind=Meta_Ind, slicedict=mSliceDict,**params)
 valid_gen = DataGenerator_mem(valid_list_ind, datadict=mDataDict, Meta_Ind=Meta_Ind, slicedict=mSliceDict, **params)

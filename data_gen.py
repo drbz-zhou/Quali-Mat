@@ -71,7 +71,7 @@ class DataGenerator(keras.utils.Sequence):
 class DataGenerator_mem(keras.utils.Sequence):
     'Generates data for Keras'
     def __init__(self, list_IDs, datadict, Meta_Ind, slicedict, batch_size=32, dim=(128,64,50), n_channels=1,
-                 n_classes=47, shuffle=True, datapath='PY/datagen_2d/all/', labelpath=''):
+                 n_classes=47, shuffle=True, datapath='PY/datagen_2d/all/', labelpath='', y_offset = 1, labelmode = ''):
         'Initialization'
         self.dim = dim
         self.batch_size = batch_size
@@ -85,6 +85,11 @@ class DataGenerator_mem(keras.utils.Sequence):
         self.shuffle = shuffle
         self.datapath = datapath
         self.labelpath = labelpath
+        self.y_offset = y_offset
+        if labelmode == '':
+            self.labelmode = str(self.n_classes)
+        else:
+            self.labelmode = labelmode
         self.on_epoch_end()
 
     def __len__(self):
@@ -120,7 +125,7 @@ class DataGenerator_mem(keras.utils.Sequence):
         for i, ID in enumerate(list_IDs_temp):
             # Store sample and class
             tempX, y[i] = parser.clip_from_metaindex_mem(ID, datadict=self.datadict, Meta_Ind=self.Meta_Ind, slicedict = self.slicedict,
-                                                         datapath=self.datapath, labelpath=self.labelpath, labelmode=str(self.n_classes))
+                                                         datapath=self.datapath, labelpath=self.labelpath, labelmode=self.labelmode)
             X[i,] = np.swapaxes(tempX[:, :, :, np.newaxis], 0, 1)
-        return X, keras.utils.to_categorical(y-1, num_classes=self.n_classes)
+        return X, keras.utils.to_categorical(y-self.y_offset, num_classes=self.n_classes)
     
