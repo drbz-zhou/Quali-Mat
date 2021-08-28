@@ -235,7 +235,7 @@ class Encoder(tf.keras.layers.Layer):
     x = self.exp_dim(x)
     x = self.embedding(x)  # (batch_size, input_seq_len, d_model)
     x *= tf.math.sqrt(tf.cast(self.d_model, tf.float32))
-    x += self.pos_tf[:,:,:]
+    x += self.pos_tf[:,:,:]  #positional encoding
     x = self.dropout(x, training=training)
 
 
@@ -271,11 +271,12 @@ def build_Conv_Trans(num_heads = 8, dff = 64, numClass = 47, d_model = 64,
     m_output = layers.Flatten()(m_output)
     print("m_output before encoder: "+str(m_output.shape))
     #m_output = EncoderLayer(d_model = d_model, num_heads=num_heads, dff=dff)(m_output, False, None)
-    m_output = Encoder(num_layers = 5, d_model = d_model, num_heads=num_heads, dff=dff, pos_dim=pos_dim)(m_output, False, None)
+    m_output = Encoder(num_layers = 7, d_model = d_model, num_heads=num_heads, dff=dff, pos_dim=pos_dim)(m_output, False, None)
 
     #print("m_output after encoder: "+str(m_output.shape))
     #m_output = layers.AveragePooling1D( pool_size = 5, strides= 5 )(m_output)
     m_output = layers.LocallyConnected1D(filters = 8, kernel_size = 5, strides= 5)(m_output)
+    #m_output = layers.Conv1D(filters = 8, kernel_size = 5, strides= 5)(m_output)
     #m_output = layers.Permute(dims = (2,1))(m_output)
     m_output = layers.Flatten()(m_output)
     #print("m_output after flatten: "+str(m_output.shape))

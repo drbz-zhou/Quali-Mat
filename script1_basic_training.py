@@ -28,7 +28,7 @@ numClass = 47
 out_Session = 3
 plim = 13 # 7 for 6 people (64GB RAM), 13 for all 12 people (needs 128GB RAM), 2 for 1 person with quick test
 
-params = {'batch_size': 100, 'shuffle': True, 'n_classes': numClass}
+params = {'batch_size': 150, 'shuffle': True, 'n_classes': numClass}
 params['dim'] = (128, 64, 50)
 params['n_channels'] = 1
 params['datapath'] = '../Data/SessionCSV/'
@@ -102,13 +102,13 @@ elif model_arch=="Img_Tconv":
 elif model_arch=="Img_Tconv_TD":
     model = model_builder.build_Img_TConv_TD(numClass=numClass)
 elif model_arch=="Conv_Trans":
-    model = model_builder.build_Conv_Trans(num_heads = 8, dff = 32, numClass = numClass, d_model = 32,
+    model = model_builder.build_Conv_Trans(num_heads = 1, dff = 32, numClass = numClass, d_model = 32,
                      dropoutrate = 0.2, conv_filters = 5, conv_kernel = 3)
 elif model_arch=="Conv_Trans_w9":  #with model 9 as the category restrictor, numClass should be 47
     model = model_builder.build_Conv_Trans_w9(num_heads = 8, dff = 32, numClass = numClass, d_model = 32,
                      dropoutrate = 0.2, conv_filters = 5, conv_kernel = 3)
-    
-m_opt = keras.optimizers.Adam(learning_rate=0.0001)
+m_ini_learning_rate = 0.001
+m_opt = keras.optimizers.Adam(learning_rate=m_ini_learning_rate)
 model.compile(optimizer=m_opt,
               loss=keras.losses.BinaryCrossentropy(from_logits=True),
               metrics=['accuracy'])
@@ -127,31 +127,32 @@ train_gen = DataGenerator_mem(train_list_ind, datadict=mDataDict, Meta_Ind=Meta_
 valid_gen = DataGenerator_mem(valid_list_ind, datadict=mDataDict, Meta_Ind=Meta_Ind, slicedict=mSliceDict, **params)
 # train model
 model, history = tools.train_gen(
-    model, epoch, train_gen, valid_gen, modelsavefile, patience, Batch_size=params['batch_size'])
+    model, epoch, train_gen, valid_gen, modelsavefile, patience, Batch_size=params['batch_size'], 
+    initial_learning_rate=m_ini_learning_rate)
 acc, val_acc, loss, val_loss = tools.append_history(
     history, acc, val_acc, loss, val_loss)
 
 tools.print_time()
 #% test model
 model.load_weights(modelsavefile) #model needs to be built first 
-params_test = params
+params_test = params.copy()
 params_test['batch_size'] = 1
 params_test['shuffle'] = False
 # load testing data into memory
-print('load testing data')
-del train_gen
-del valid_gen
-del mDataDict
-gc.collect()
-mDataDict = {}
-for P in range(1,plim): #1,13
-    R = out_Session
-    datastr = 'P'+str(P)+'R'+str(R)
-    filename = params['datapath'] + datastr + '.npy'
-    print(datastr)
-    mDataDict[datastr]=np.load(filename)
+# print('load testing data')
+# del train_gen
+# del valid_gen
+# del mDataDict
+# gc.collect()
+# mDataDict = {}
+# for P in range(1,plim): #1,13
+#     R = out_Session
+#     datastr = 'P'+str(P)+'R'+str(R)
+#     filename = params['datapath'] + datastr + '.npy'
+#     print(datastr)
+#     mDataDict[datastr]=np.load(filename)
             
-test_gen = DataGenerator_mem(test_list_ind, datadict=mDataDict, Meta_Ind=Meta_Ind, slicedict=mSliceDict, **params)
+test_gen = DataGenerator_mem(test_list_ind, datadict=mDataDict, Meta_Ind=Meta_Ind, slicedict=mSliceDict, **params_test)
 m_y_test = labels[test_list_ind]-1
 
 m_y_pred = model.predict(test_gen)
