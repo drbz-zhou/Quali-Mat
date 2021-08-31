@@ -257,6 +257,14 @@ def build_Conv_Trans(num_heads = 8, dff = 64, numClass = 47, d_model = 64,
                                                conv_kernel = conv_kernel)
     return model
 
+def build_NeoConv_Trans(num_heads = 8, dff = 64, numClass = 47, d_model = 64,
+                     dropoutrate = 0.2, conv_filters = 10, conv_kernel = 5):
+    model = trans_builder.build_NeoConv_Trans(num_heads = num_heads, dff = dff, 
+                                               numClass = numClass, d_model = d_model,
+                                               dropoutrate = dropoutrate, conv_filters = conv_filters, 
+                                               conv_kernel = conv_kernel)
+    return model
+
 def build_Conv_Trans_w9(num_heads = 8, dff = 64, numClass = 47, d_model = 64,
                      dropoutrate = 0.2, conv_filters = 10, conv_kernel = 5, 
                      model_9_path = '../Outputs/TrainedModels/modelweight_Conv_Trans_9.h5'):

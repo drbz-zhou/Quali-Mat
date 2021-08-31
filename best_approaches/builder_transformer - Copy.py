@@ -3,6 +3,21 @@
 Created on Fri Aug 20 12:51:59 2021
 
 @author: fredr
+
+
+model = model_builder.build_Conv_Trans(num_heads = 1, dff = 32, numClass = numClass, d_model = 32,
+                 dropoutrate = 0.2, conv_filters = 5, conv_kernel = 3)
+    
+m_ini_learning_rate = 0.0001
+
+
+def lr_scheduler_exp(epoch, lr):
+    if epoch < 50:
+        return lr
+    elif epoch % 20 != 1:
+        return lr
+    else:
+        return lr * 0.5 #* math.exp(-0.1)
 """
 
 

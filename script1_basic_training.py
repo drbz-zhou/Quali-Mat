@@ -104,10 +104,13 @@ elif model_arch=="Img_Tconv_TD":
 elif model_arch=="Conv_Trans":
     model = model_builder.build_Conv_Trans(num_heads = 1, dff = 32, numClass = numClass, d_model = 32,
                      dropoutrate = 0.2, conv_filters = 5, conv_kernel = 3)
+elif model_arch=="NeoConv_Trans":
+    model = model_builder.build_NeoConv_Trans(num_heads = 1, dff = 32, numClass = numClass, d_model = 32,
+                     dropoutrate = 0.2, conv_filters = 5, conv_kernel = 3)
 elif model_arch=="Conv_Trans_w9":  #with model 9 as the category restrictor, numClass should be 47
     model = model_builder.build_Conv_Trans_w9(num_heads = 8, dff = 32, numClass = numClass, d_model = 32,
                      dropoutrate = 0.2, conv_filters = 5, conv_kernel = 3)
-m_ini_learning_rate = 0.001
+m_ini_learning_rate = 0.0001
 m_opt = keras.optimizers.Adam(learning_rate=m_ini_learning_rate)
 model.compile(optimizer=m_opt,
               loss=keras.losses.BinaryCrossentropy(from_logits=True),
@@ -120,7 +123,7 @@ loss = []
 val_loss = []
 epoch = 10000
 modelsavefile = '../Outputs/model_'+model_arch+'_'+str(numClass)+'.h5'
-patience= 40
+patience= 60
 
 #%%            
 train_gen = DataGenerator_mem(train_list_ind, datadict=mDataDict, Meta_Ind=Meta_Ind, slicedict=mSliceDict,**params)

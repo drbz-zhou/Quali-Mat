@@ -129,7 +129,8 @@ def train_step(model, epoch, m_data_train, m_y_train, m_data_valid, m_y_valid, m
         )
     return model, history
 
-def lr_time_based_decay(epoch, lr, decay):
+def lr_time_based_decay(epoch, lr, initial_learning_rate):
+    decay = initial_learning_rate / epoch
     return lr * 1 / (1 + decay * epoch)
 
 def lr_step_decay(epoch, lr, initial_learning_rate):
@@ -138,22 +139,24 @@ def lr_step_decay(epoch, lr, initial_learning_rate):
     return initial_learning_rate * math.pow(drop_rate, math.floor(epoch/epochs_drop))
 
 def lr_scheduler_exp(epoch, lr):
-    if epoch < 10:
+    if epoch < 50:
+        return lr
+    elif epoch % 20 != 1:
         return lr
     else:
-        return lr * tf.math.exp(-0.1)
+        return lr * 0.5 #* math.exp(-0.1)
     
-def train_gen(model, epoch, m_datagen_train, m_datagen_valid, modelsavefile, Patience = 50, Batch_size = 32, weights_only=False, initial_learning_rate=0.001):
-    decay = initial_learning_rate / epoch
-
+def train_gen(model, epoch, m_datagen_train, m_datagen_valid, modelsavefile, 
+              Patience = 50, Batch_size = 32, weights_only=False, initial_learning_rate=0.001):
     cb_learningrate=keras.callbacks.LearningRateScheduler(lr_scheduler_exp, verbose=1)
     cb_checkpoint = keras.callbacks.ModelCheckpoint(modelsavefile, monitor='val_accuracy', mode='max', 
                                                     verbose=1, save_weights_only=weights_only,save_best_only=True)
-    cb_earlystop = keras.callbacks.EarlyStopping(patience=Patience, monitor='val_accuracy', verbose = 1, restore_best_weights=True )
+    cb_earlystop = keras.callbacks.EarlyStopping(patience=Patience, monitor='val_accuracy', verbose = 1, 
+                                                 restore_best_weights=True )
     history = model.fit( x = m_datagen_train, epochs = epoch, batch_size=Batch_size,
               #use_multiprocessing = True,
               validation_data = m_datagen_valid,
-              callbacks=[cb_checkpoint, cb_earlystop, cb_learningrate],
+              callbacks=[cb_checkpoint, cb_earlystop, cb_learningrate], #, cb_learningrate
               verbose = 1 # 2 if log to file
         )
     return model, history
