@@ -16,6 +16,9 @@ import subprocess, os, sys
 import tensorflow as tf
 import math
 
+def tf_board():
+    return
+
 def tf_setup_GPU(ind=0):
     gpus = tf.config.experimental.list_physical_devices('GPU')
     if gpus:
@@ -147,16 +150,19 @@ def lr_scheduler_exp(epoch, lr):
         return lr * 0.5 #* math.exp(-0.1)
     
 def train_gen(model, epoch, m_datagen_train, m_datagen_valid, modelsavefile, 
-              Patience = 50, Batch_size = 32, weights_only=False, initial_learning_rate=0.001):
+              Patience = 50, Batch_size = 32, weights_only=False, initial_learning_rate=0.001, logpath='../Outputs/Logs/'):
     cb_learningrate=keras.callbacks.LearningRateScheduler(lr_scheduler_exp, verbose=1)
     cb_checkpoint = keras.callbacks.ModelCheckpoint(modelsavefile, monitor='val_accuracy', mode='max', 
                                                     verbose=1, save_weights_only=weights_only,save_best_only=True)
     cb_earlystop = keras.callbacks.EarlyStopping(patience=Patience, monitor='val_accuracy', verbose = 1, 
-                                                 restore_best_weights=True )
+                                                 restore_best_weights=True )    
+    log_dir = logpath+ datetime.now().strftime("%Y%m%d-%H%M%S")
+    cb_tensorboard = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
+
     history = model.fit( x = m_datagen_train, epochs = epoch, batch_size=Batch_size,
               #use_multiprocessing = True,
               validation_data = m_datagen_valid,
-              callbacks=[cb_checkpoint, cb_earlystop, cb_learningrate], #, cb_learningrate
+              callbacks=[cb_checkpoint, cb_earlystop, cb_learningrate, cb_tensorboard], #, cb_learningrate
               verbose = 1 # 2 if log to file
         )
     return model, history

@@ -90,7 +90,7 @@ tools.print_time()
 #mDataExample=train_gen.__data_generation([10])
 #model = model_builder.build_Conv3D(filters=5, kernel=3, dense=256, numClass=numClass)
 #model = model_builder.build_TConv_Incpt(filters = 5, kernel = (1,1,3), fine_tune_at = 500, numClass = numClass)
-model_arch="Conv_Trans"
+model_arch="NeoConv_Trans"
 if model_arch=="Conv3D":
     model = model_builder.build_Conv3D(
         filters=5, kernel=5, dense=512, numClass=numClass, dropoutrate = 0.5)
@@ -123,7 +123,7 @@ loss = []
 val_loss = []
 epoch = 10000
 modelsavefile = '../Outputs/model_'+model_arch+'_'+str(numClass)+'.h5'
-patience= 60
+patience= 100
 
 #%%            
 train_gen = DataGenerator_mem(train_list_ind, datadict=mDataDict, Meta_Ind=Meta_Ind, slicedict=mSliceDict,**params)
