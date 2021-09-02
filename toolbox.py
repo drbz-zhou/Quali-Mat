@@ -144,7 +144,7 @@ def lr_step_decay(epoch, lr, initial_learning_rate):
 def lr_scheduler_exp(epoch, lr):
     if epoch < 50:
         return lr
-    elif epoch % 20 != 1:
+    elif epoch % 10 != 1:
         return lr
     else:
         return lr * 0.5 #* math.exp(-0.1)
@@ -248,6 +248,7 @@ def plot_confusion_matrix(cm, class_names, if_save = True, file_path = '', title
         now = datetime.now()
         date_time = now.strftime("%m%d%H%M%S")
         plt.savefig(file_path+'CM-'+date_time+'.png')
+        np.save(file_path+'CM-'+date_time+'.npy', cm)
     else:
         plt.show()
     return figure

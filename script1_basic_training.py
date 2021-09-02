@@ -105,7 +105,7 @@ elif model_arch=="Conv_Trans":
     model = model_builder.build_Conv_Trans(num_heads = 1, dff = 32, numClass = numClass, d_model = 32,
                      dropoutrate = 0.2, conv_filters = 5, conv_kernel = 3)
 elif model_arch=="NeoConv_Trans":
-    model = model_builder.build_NeoConv_Trans(num_heads = 1, dff = 32, numClass = numClass, d_model = 32,
+    model = model_builder.build_NeoConv_Trans(num_heads = 2, dff = 32, numClass = numClass, d_model = 32,
                      dropoutrate = 0.2, conv_filters = 5, conv_kernel = 3)
 elif model_arch=="Conv_Trans_w9":  #with model 9 as the category restrictor, numClass should be 47
     model = model_builder.build_Conv_Trans_w9(num_heads = 8, dff = 32, numClass = numClass, d_model = 32,
@@ -121,9 +121,9 @@ acc = []
 val_acc = []
 loss = []
 val_loss = []
-epoch = 10000
+epoch = 120
 modelsavefile = '../Outputs/model_'+model_arch+'_'+str(numClass)+'.h5'
-patience= 100
+patience= 50
 
 #%%            
 train_gen = DataGenerator_mem(train_list_ind, datadict=mDataDict, Meta_Ind=Meta_Ind, slicedict=mSliceDict,**params)
@@ -169,4 +169,4 @@ tools.plot_confusion_matrix(cm, range(1, numClass+1), file_path = out_path + mod
         str(numClass) + '_LO' + str(out_Session)+'_')
 tools.plot_acc_loss(acc, val_acc, loss, val_loss, file_path = out_path + model_arch + '_' + \
         str(numClass) + '_LO' + str(out_Session)+'_')
-    
+
