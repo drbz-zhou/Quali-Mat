@@ -105,7 +105,7 @@ elif model_arch=="Conv_Trans":
     model = model_builder.build_Conv_Trans(num_heads = 1, dff = 32, numClass = numClass, d_model = 32,
                      dropoutrate = 0.2, conv_filters = 5, conv_kernel = 3)
 elif model_arch=="NeoConv_Trans":
-    model = model_builder.build_NeoConv_Trans(num_heads = 2, dff = 32, numClass = numClass, d_model = 32,
+    model = model_builder.build_NeoConv_Trans(num_heads = 4, dff = 32, numClass = numClass, d_model = 64,
                      dropoutrate = 0.2, conv_filters = 5, conv_kernel = 3)
 elif model_arch=="Conv_Trans_w9":  #with model 9 as the category restrictor, numClass should be 47
     model = model_builder.build_Conv_Trans_w9(num_heads = 8, dff = 32, numClass = numClass, d_model = 32,
