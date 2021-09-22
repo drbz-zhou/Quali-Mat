@@ -246,7 +246,7 @@ def plot_confusion_matrix(cm, class_names, if_save = True, file_path = '', title
     #plt.show()
     if if_save:
         now = datetime.now()
-        date_time = now.strftime("%m%d%H%M%S")
+        date_time = now.strftime("%m%d%H%M")
         plt.savefig(file_path+'CM-'+date_time+'.png')
         np.save(file_path+'CM-'+date_time+'.npy', cm)
     else:
@@ -272,7 +272,7 @@ def plot_acc_loss(acc, val_acc, loss, val_loss, if_save = True, file_path = ''):
     #plt.show()
     if if_save:
         now = datetime.now()
-        date_time = now.strftime("%m%d%H%M%S")
+        date_time = now.strftime("%m%d%H%M")
         plt.savefig(file_path+'AccLoss-'+date_time+'.png')
     else:
         plt.show()

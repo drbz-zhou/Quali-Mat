@@ -87,9 +87,9 @@ tools.print_time()
 #     PRS[:,i] = [P,R,S]
 #%%
 model_arch = 'NeoConv_Trans'
-for d_model in [32]: #16, 32, 64
-    for dff in [16,64]: #16,32,64
-        for num_heads in [2,4,8]: #1,2,4,8
+for d_model in [64]: #16, 32, 64
+    for dff in [16,32,64]: #16,32,64
+        for num_heads in [1,2,4,8]: #1,2,4,8
             model = model_builder.build_NeoConv_Trans(num_heads = num_heads, dff = dff, numClass = numClass, d_model = d_model,
                              dropoutrate = 0.2, conv_filters = 5, conv_kernel = 3)
             m_ini_learning_rate = 0.0001

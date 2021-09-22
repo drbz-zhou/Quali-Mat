@@ -25,7 +25,7 @@ import data_parser as parser
 tools.tf_setup_GPU()
 #tools.tf_mem_patch()
 numClass = 47
-out_Session = 3
+out_Session = 1
 plim = 13 # 7 for 6 people (64GB RAM), 13 for all 12 people (needs 128GB RAM), 2 for 1 person with quick test
 
 params = {'batch_size': 150, 'shuffle': True, 'n_classes': numClass}
@@ -105,7 +105,7 @@ elif model_arch=="Conv_Trans":
     model = model_builder.build_Conv_Trans(num_heads = 1, dff = 32, numClass = numClass, d_model = 32,
                      dropoutrate = 0.2, conv_filters = 5, conv_kernel = 3)
 elif model_arch=="NeoConv_Trans":
-    model = model_builder.build_NeoConv_Trans(num_heads = 4, dff = 32, numClass = numClass, d_model = 64,
+    model = model_builder.build_NeoConv_Trans(num_heads = 2, dff = 64, numClass = numClass, d_model = 64,
                      dropoutrate = 0.2, conv_filters = 5, conv_kernel = 3)
 elif model_arch=="Conv_Trans_w9":  #with model 9 as the category restrictor, numClass should be 47
     model = model_builder.build_Conv_Trans_w9(num_heads = 8, dff = 32, numClass = numClass, d_model = 32,
@@ -121,9 +121,9 @@ acc = []
 val_acc = []
 loss = []
 val_loss = []
-epoch = 120
+epoch = 1000
 modelsavefile = '../Outputs/model_'+model_arch+'_'+str(numClass)+'.h5'
-patience= 50
+patience= 100
 
 #%%            
 train_gen = DataGenerator_mem(train_list_ind, datadict=mDataDict, Meta_Ind=Meta_Ind, slicedict=mSliceDict,**params)
@@ -131,7 +131,7 @@ valid_gen = DataGenerator_mem(valid_list_ind, datadict=mDataDict, Meta_Ind=Meta_
 # train model
 model, history = tools.train_gen(
     model, epoch, train_gen, valid_gen, modelsavefile, patience, Batch_size=params['batch_size'], 
-    initial_learning_rate=m_ini_learning_rate)
+    initial_learning_rate=m_ini_learning_rate, logpath = '../Outputs/Logs/'+model_arch+'_outS'+str(out_Session)+'_')
 acc, val_acc, loss, val_loss = tools.append_history(
     history, acc, val_acc, loss, val_loss)
 

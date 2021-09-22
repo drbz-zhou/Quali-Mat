@@ -11,21 +11,29 @@ import builder_transformer as trans_builder
 
 def build_Conv3D(filters = 5, kernel = 3, dense = 256, numClass = 9, dropoutrate = 0.5):
     model = keras.models.Sequential([
-        layers.Conv3D( filters = filters, kernel_size = kernel, padding='same', activation='relu', input_shape=(128, 64 ,50, 1)),
-        layers.MaxPooling3D(),
+        layers.Conv3D( filters = 10, kernel_size = kernel, padding='same', activation='relu', input_shape=(128, 64 ,50, 1)),
+        layers.AveragePooling3D(pool_size=(2, 2, 3)),
         layers.Dropout(dropoutrate),
-        layers.Conv3D( filters = filters, kernel_size = kernel, padding='same', activation='relu'),
+        layers.Conv3D( filters = 20, kernel_size = kernel, padding='same', activation='relu'),
         layers.BatchNormalization(),
-        layers.MaxPooling3D(),
+        layers.AveragePooling3D(pool_size=(2, 2, 3)),
         layers.Dropout(dropoutrate),
-        layers.Conv3D( filters = filters, kernel_size = kernel, padding='same', activation='relu'),
+        layers.Conv3D( filters = 40, kernel_size = kernel, padding='same', activation='relu'),
         layers.BatchNormalization(),
-        layers.MaxPooling3D(),
+        layers.AveragePooling3D(pool_size=(2, 2, 1)),
         layers.Dropout(dropoutrate),
-        layers.Conv3D( filters = filters, kernel_size = kernel, padding='same', activation='relu'),
+        layers.Conv3D( filters = 80, kernel_size = kernel, padding='same', activation='relu'),
         layers.BatchNormalization(),
+        layers.AveragePooling3D(pool_size=(2, 2, 1)),
+        layers.Conv3D( filters = 5, kernel_size = kernel, padding='same', activation='relu'),
+        layers.BatchNormalization(),
+        layers.Dropout(dropoutrate),
+        layers.Conv3D( filters = 1, kernel_size = kernel, padding='same', activation='relu'),
+        layers.BatchNormalization(),
+        layers.Reshape((8,4,5)),
+        layers.Conv2D( filters = 1, kernel_size = kernel, padding='same', activation='relu'),
         layers.Flatten(),
-        layers.Dense(dense, activation='relu'),
+        #layers.Dense(dense, activation='relu'),
         layers.Dense(numClass, activation='softmax')
     ])
     return model
