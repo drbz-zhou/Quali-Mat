@@ -87,6 +87,7 @@ def slice_from_PRS(P, R, S, datapath, labelpath, labelmode): #='Data/'  ='G:/New
 def slice_from_PRS_mem(S, slices, labelmode): #='Data/'  ='G:/NewSmartMat/Data/labels/'
     index_start=slices[S,0]
     index_end = slices[S,1]
+    label=0
     if labelmode == '47':
         label = slices[S,2]
     elif labelmode == '9':

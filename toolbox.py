@@ -167,6 +167,23 @@ def train_gen(model, epoch, m_datagen_train, m_datagen_valid, modelsavefile,
         )
     return model, history
 
+def train_gen_nodecay(model, epoch, m_datagen_train, m_datagen_valid, modelsavefile, 
+              Patience = 50, Batch_size = 32, weights_only=False, initial_learning_rate=0.001, logpath='../Outputs/Logs/'):
+    cb_checkpoint = keras.callbacks.ModelCheckpoint(modelsavefile, monitor='val_accuracy', mode='max', 
+                                                    verbose=1, save_weights_only=weights_only,save_best_only=True)
+    cb_earlystop = keras.callbacks.EarlyStopping(patience=Patience, monitor='val_accuracy', verbose = 1, 
+                                                 restore_best_weights=True )    
+    log_dir = logpath+ datetime.now().strftime("%Y%m%d-%H%M%S")
+    cb_tensorboard = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
+
+    history = model.fit( x = m_datagen_train, epochs = epoch, batch_size=Batch_size,
+              #use_multiprocessing = True,
+              validation_data = m_datagen_valid,
+              callbacks=[cb_checkpoint, cb_earlystop, cb_tensorboard], #, cb_learningrate
+              verbose = 1 # 2 if log to file
+        )
+    return model, history
+
 def train_gen_autovalid(model, epoch, m_datagen_train, modelsavefile, Patience = 50, Batch_size = 32, weights_only=False):
     cb_checkpoint = keras.callbacks.ModelCheckpoint(modelsavefile, monitor='val_accuracy', mode='max', 
                                                     verbose=1, save_weights_only=weights_only,save_best_only=True)

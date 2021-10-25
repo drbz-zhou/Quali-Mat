@@ -27,7 +27,7 @@ numClass = 47
 out_Session = 3
 plim = 13 # 7 for 6 people (64GB RAM), 13 for all 12 people (needs 128GB RAM), 2 for 1 person with quick test
 
-params = {'batch_size': 100, 'shuffle': True, 'n_classes': numClass}
+params = {'batch_size': 250, 'shuffle': True, 'n_classes': numClass}
 params['dim'] = (128, 64, 50)
 params['n_channels'] = 1
 params['datapath'] = '../Data/SessionCSV/'
@@ -88,7 +88,7 @@ for subcat in range( 1, 10 ): #subcategory  (1, 10)
         
     tools.print_time()
     
-    model_arch="Conv_Trans"
+    model_arch="Conv3D"
     if model_arch=="Conv3D":
         model = model_builder.build_Conv3D(
             filters=5, kernel=5, dense=512, numClass=numClass, dropoutrate = 0.5)

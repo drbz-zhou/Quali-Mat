@@ -9,7 +9,7 @@ import tensorflow as tf
 from tensorflow.keras import layers
 import builder_transformer as trans_builder
 
-def build_Conv3D(filters = 5, kernel = 3, dense = 256, numClass = 9, dropoutrate = 0.5):
+def build_Conv3D(filters = 5, kernel = 3, dense = 256, numClass = 9, dropoutrate = 0.2):
     model = keras.models.Sequential([
         layers.Conv3D( filters = 10, kernel_size = kernel, padding='same', activation='relu', input_shape=(128, 64 ,50, 1)),
         layers.AveragePooling3D(pool_size=(2, 2, 3)),
