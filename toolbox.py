@@ -228,7 +228,7 @@ def append_history(history, acc, val_acc, loss, val_loss):
     val_loss = np.concatenate( ( val_loss, np.array(history.history['val_loss'])))
     return acc, val_acc, loss, val_loss
 
-def plot_confusion_matrix(cm, class_names, if_save = True, file_path = '', title_prefix='Confusion matrix'):
+def plot_confusion_matrix(cm_in, class_names, if_save = True, file_path = '', title_prefix='Confusion matrix'):
     """
     Returns a matplotlib figure containing the plotted confusion matrix.
     
@@ -236,15 +236,18 @@ def plot_confusion_matrix(cm, class_names, if_save = True, file_path = '', title
     cm (array, shape = [n, n]): a confusion matrix of integer classes
     class_names (array, shape = [n]): String names of the integer classes
     """
-    figure = plt.figure(figsize=(len(class_names)/2, len(class_names)/2))
-    plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
+    fig_size = (len(class_names)/2, len(class_names)/2)
+    if fig_size[0] < 4.5:
+        fig_size = (4.5, 4.5) # smallest 450 pixels
+    figure = plt.figure(figsize=fig_size)
+    plt.imshow(cm_in, interpolation='nearest', cmap=plt.cm.Blues)
     plt.colorbar()
     tick_marks = np.arange(len(class_names))
     plt.xticks(tick_marks, class_names, rotation=45)
     plt.yticks(tick_marks, class_names)
     
     # Normalize the confusion matrix.
-    cm = np.around(cm.astype('float') / cm.sum(axis=1)[:, np.newaxis], decimals=2)
+    cm = np.around(cm_in.astype('float') / cm_in.sum(axis=1)[:, np.newaxis], decimals=2)
     
     # Use white text if squares are dark; otherwise black.
     threshold = cm.max() / 2.
@@ -265,7 +268,7 @@ def plot_confusion_matrix(cm, class_names, if_save = True, file_path = '', title
         now = datetime.now()
         date_time = now.strftime("%m%d%H%M")
         plt.savefig(file_path+'CM-'+date_time+'.png')
-        np.save(file_path+'CM-'+date_time+'.npy', cm)
+        np.save(file_path+'CM-'+date_time+'.npy', cm_in)
     else:
         plt.show()
     return figure

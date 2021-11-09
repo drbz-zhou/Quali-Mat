@@ -28,7 +28,7 @@ numClass = 47
 out_Session = 1
 plim = 13 # 7 for 6 people (64GB RAM), 13 for all 12 people (needs 128GB RAM), 2 for 1 person with quick test
 
-params = {'batch_size': 150, 'shuffle': True, 'n_classes': numClass}
+params = {'batch_size': 32, 'shuffle': True, 'n_classes': numClass}
 params['dim'] = (128, 64, 50)
 params['n_channels'] = 1
 params['datapath'] = '../Data/SessionCSV/'
@@ -90,7 +90,7 @@ tools.print_time()
 #mDataExample=train_gen.__data_generation([10])
 #model = model_builder.build_Conv3D(filters=5, kernel=3, dense=256, numClass=numClass)
 #model = model_builder.build_TConv_Incpt(filters = 5, kernel = (1,1,3), fine_tune_at = 500, numClass = numClass)
-model_arch="NeoConv_Trans"
+model_arch="Img_Tconv_TD"
 if model_arch=="Conv3D":
     model = model_builder.build_Conv3D(
         filters=5, kernel=5, dense=512, numClass=numClass, dropoutrate = 0.5)

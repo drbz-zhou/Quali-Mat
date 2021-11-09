@@ -224,31 +224,57 @@ def build_Img_TConv_TD(numClass):
     filters = 5
     kernel=3
     time_model = keras.Sequential([
-            layers.Reshape((50,128,1), input_shape=(50, 128)),
-            layers.Conv2D( filters = filters, kernel_size = kernel, padding='same', activation='relu', input_shape=(50, 128, 1)),
+            layers.Reshape((25,128,1), input_shape=(25, 128)),
+            layers.Conv2D( filters = filters, kernel_size = kernel, padding='same', activation='relu', input_shape=(25, 128, 1)),
             layers.BatchNormalization(),
             layers.AveragePooling2D(pool_size=(2,2)),
             layers.Dropout(0.2),
-            layers.Conv2D( filters = filters, kernel_size = kernel, padding='same', activation='relu', input_shape=(25, 64, 1)),
+            layers.Conv2D( filters = filters*2, kernel_size = kernel, padding='same', activation='relu', input_shape=(12, 64, 1)),
             layers.BatchNormalization(),
             layers.AveragePooling2D(pool_size=(2,2)),
             layers.Dropout(0.2),
-            layers.Conv2D( filters = filters, kernel_size = kernel, padding='same', activation='relu', input_shape=(12, 32, 1)),
+            layers.Conv2D( filters = filters*4, kernel_size = kernel, padding='same', activation='relu', input_shape=(6, 32, 1)),
+            #layers.BatchNormalization(),
+            #layers.AveragePooling2D(pool_size=(2,2)),
+            #layers.Dropout(0.2),
+            #layers.Conv2D( filters = filters*8, kernel_size = kernel, padding='same', activation='relu', input_shape=(3, 16, 1)),
             layers.BatchNormalization(),
-            layers.AveragePooling2D(pool_size=(2,2)),
-            layers.Dropout(0.2),
-            layers.Conv2D( filters = filters, kernel_size = kernel, padding='same', activation='relu', input_shape=(6, 16, 1)),
-            layers.BatchNormalization(),
+            layers.Conv2D( filters = 1, kernel_size = kernel, padding='same', activation='relu'),
             #layers.AveragePooling2D(pool_size=(2,1)),
             layers.Dropout(0.2),
             layers.Flatten()
             ], name = 'ModelTimeConv')
-    time_model.Name = 'ModelTimeConv'    
+    time_model.Name = 'ModelTimeConv' 
+
+    fine_tune_at = 30
+    #imag_model = keras.applications.InceptionResNetV2(weights='imagenet', 
+    #                              include_top=False, input_shape=(128,128,3))
+    imag_model = tf.keras.applications.MobileNetV2(weights='imagenet', 
+                                    include_top=False, input_shape=(128,128,3))
     
-    m_input = tf.keras.Input(shape = (128, 64, 50, 1))
-    m_output = tf.keras.layers.Permute((3,1,2,4))(m_input)
-    #m_output = tf.keras.layers.TimeDistributed(imag_layer)(m_output)
-    m_output = ImagTDRepeatingLayer()(m_output)
+    def repeat(x):
+        x1 = tf.keras.layers.concatenate( (x,x,x), axis=-1)
+        return x1
+    repeat_layer = tf.keras.layers.Lambda(repeat, output_shape=(128,64,3))
+
+    imag_model_2 = tf.keras.Sequential([
+        tf.keras.layers.Input((128, 64, 1)),
+        #tf.keras.layers.Permute((2,3,1)),
+        # tf.keras.layers.Reshape(target_shape=(128,64,1)),
+        tf.keras.layers.UpSampling2D(size=(1,2),interpolation='bilinear'), # change to zero padding?
+        repeat_layer,
+        # tf.keras.layers.UpSampling3D(size=(1,1,3)),  #128,128,3 for RGB channels
+        imag_model,
+        tf.keras.layers.Flatten(),
+        tf.keras.layers.Dropout(0.2),
+        tf.keras.layers.Dense(128, activation='relu')
+        ])   
+    
+    m_input = tf.keras.Input((128, 64, 50, 1))
+    m_output = tf.keras.layers.AveragePooling3D( pool_size=(1,1,2) )(m_input)
+    m_output = tf.keras.layers.Permute((3,1,2,4))(m_output)
+
+    m_output = tf.keras.layers.TimeDistributed(imag_model_2)(m_output)
     m_output = time_model(m_output)
     m_output = tf.keras.layers.Dense(numClass, activation='softmax')(m_output)
     model = keras.Model(
@@ -256,6 +282,7 @@ def build_Img_TConv_TD(numClass):
         outputs = m_output,
     )
     return model
+
 
 def build_Conv_Trans(num_heads = 8, dff = 64, numClass = 47, d_model = 64,
                      dropoutrate = 0.2, conv_filters = 10, conv_kernel = 5):
