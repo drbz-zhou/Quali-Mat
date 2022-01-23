@@ -50,22 +50,33 @@ def build_conv_encoder(kernel=5, dropoutrate=0.2):
 def build_conv_classifier(numClass=47, kernel=5, dropoutrate=0.2):
     model = keras.models.Sequential([        
         layers.Dropout(dropoutrate),
+        
         layers.Conv3D( filters = 1, kernel_size = kernel, padding='same', activation='relu'),
         layers.BatchNormalization(),
         layers.Reshape((8,4,5)),
-        layers.Conv2D( filters = 1, kernel_size = kernel, padding='same', activation='relu'),
+        layers.Conv2D( filters = 2, kernel_size = kernel, padding='same', activation='relu'),
         layers.Flatten(),
         layers.Dense(numClass, activation='softmax')
         ])
     return model
 
+def build_dense_classifier(numClass=47, kernel=5, dropoutrate=0.2):
+    model = keras.models.Sequential([        
+        layers.Dropout(dropoutrate),
+        layers.Flatten(),
+        layers.Dense(128, activation='relu'),
+        layers.Dropout(dropoutrate),
+        layers.BatchNormalization(),
+        layers.Dense(numClass, activation='softmax')
+        ])
+    return model
 #%% setup GPU
 tools.tf_setup_GPU()
 cm_all=[]
 acc_all=[]
-out_Session = 3
+out_Session = 2
 epoch = 400
-patience= 50
+patience= 20
 plim = 13 # 7 for 6 people (64GB RAM), 13 for all 12 people (needs 128GB RAM), 2 for 1 person with quick test
 
 numClass = 9 #9, 47
@@ -180,6 +191,7 @@ f=np.load(params['labelpath']+'LabelMeta'+str(numClass)+'.npz')
 label_lens=f['arr_0']
 Meta_Ind = f['arr_1'] # P, R, Slices, y-47, y-9
 labels=Meta_Ind[:,3]  #3-47, 4-9
+patience= 10
 
 # load slice label and frame index data into memory
 mSliceDict = {}
@@ -216,7 +228,7 @@ for subcat in range( 1, 10 ): #subcategory  (1, 10)
     m_output = enc_layers_sub(m_input)
     m_output = cls_layers_sub(m_output)
     
-    m_ini_learning_rate = 0.00001
+    m_ini_learning_rate = 0.0001
     m_opt = keras.optimizers.Adam(learning_rate=m_ini_learning_rate)
     
     model_cls_sub = keras.Model(
@@ -271,8 +283,8 @@ train_list_ind = train_list#np.array(train_list)[train_subind].tolist()
 valid_list_ind = np.array(test_list)[valid_subind].tolist()  #train_list
 test_list_ind = np.array(test_list)[test_subind].tolist()
 
-for i in range(1,3): #3
-    for j in range(0,2): #2
+for i in range(2,3): #3
+    for j in range(0,1): #2
         print(str(i)+','+str(j))
         
         if i==0:
@@ -285,7 +297,8 @@ for i in range(1,3): #3
             enc_layers_47 = build_conv_encoder()
             
         if j==0:
-            cls_layers_47 = build_conv_classifier(numClass, kernel=5, dropoutrate=0.2)
+            #cls_layers_47 = build_conv_classifier(numClass, kernel=5, dropoutrate=0.2)
+            cls_layers_47 = build_dense_classifier(numClass, kernel=5, dropoutrate=0.2)
             m_input = keras.Input(shape = (128, 64 ,50, 1)) 
             m_output = enc_layers_47(m_input)
             m_output = cls_layers_47(m_output)

@@ -28,14 +28,13 @@ numClass = 47
 out_Session = 1
 plim = 13 # 7 for 6 people (64GB RAM), 13 for all 12 people (needs 128GB RAM), 2 for 1 person with quick test
 
-params = {'batch_size': 32, 'shuffle': True, 'n_classes': numClass}
+params = {'batch_size': 50, 'shuffle': True, 'n_classes': numClass}
 params['dim'] = (128, 64, 50)
 params['n_channels'] = 1
 params['datapath'] = '../Data/SessionCSV/'
 params['y_offset']=1  #first label is 1 instead of 0
 params['labelpath']='../Data/labels_50_10/' # _50_5 or _50_10
 out_path = '../Outputs/'
-
 
 f=np.load(params['labelpath']+'LabelMeta'+str(numClass)+'.npz')
 label_lens=f['arr_0']
@@ -90,13 +89,15 @@ tools.print_time()
 #mDataExample=train_gen.__data_generation([10])
 #model = model_builder.build_Conv3D(filters=5, kernel=3, dense=256, numClass=numClass)
 #model = model_builder.build_TConv_Incpt(filters = 5, kernel = (1,1,3), fine_tune_at = 500, numClass = numClass)
-model_arch="Img_Tconv_TD"
+model_arch="ConvLSTM"
 if model_arch=="Conv3D":
     model = model_builder.build_Conv3D(
-        filters=5, kernel=5, dense=512, numClass=numClass, dropoutrate = 0.5)
+        filters=5, kernel=5, dense=512, numClass=numClass, dropoutrate = 0.2)
+elif model_arch=="ConvLSTM":
+    model = model_builder.build_ConvLSTM(kernel_size=5, numClass=numClass, dropoutrate = 0.2)
 elif model_arch=="TConv_Imgnet":
     model = model_builder.build_TConv_Imgnet(
-        filters = 5, kernel = (1,1,3), fine_tune_at = 200, numClass =numClass, imag_model = 'EfficientNetB0')
+        filters = 5, kernel = (1,1,3), fine_tune_at = 100, numClass =numClass, imag_model = 'MobileNetV2')
 elif model_arch=="Img_Tconv":
     model = model_builder.build_Img_TConv(numClass=numClass)
 elif model_arch=="Img_Tconv_TD":
@@ -110,7 +111,10 @@ elif model_arch=="NeoConv_Trans":
 elif model_arch=="Conv_Trans_w9":  #with model 9 as the category restrictor, numClass should be 47
     model = model_builder.build_Conv_Trans_w9(num_heads = 8, dff = 32, numClass = numClass, d_model = 32,
                      dropoutrate = 0.2, conv_filters = 5, conv_kernel = 3)
-m_ini_learning_rate = 0.0001
+elif model_arch=="build_Img_LSTM_TD":
+    model = model_builder.build_Img_LSTM_TD(numClass)
+    
+m_ini_learning_rate = 0.0005
 m_opt = keras.optimizers.Adam(learning_rate=m_ini_learning_rate)
 model.compile(optimizer=m_opt,
               loss=keras.losses.BinaryCrossentropy(from_logits=True),
@@ -121,9 +125,9 @@ acc = []
 val_acc = []
 loss = []
 val_loss = []
-epoch = 1000
+epoch = 100
 modelsavefile = '../Outputs/model_'+model_arch+'_'+str(numClass)+'.h5'
-patience= 100
+patience= 20
 
 #%%            
 train_gen = DataGenerator_mem(train_list_ind, datadict=mDataDict, Meta_Ind=Meta_Ind, slicedict=mSliceDict,**params)
@@ -136,7 +140,7 @@ acc, val_acc, loss, val_loss = tools.append_history(
     history, acc, val_acc, loss, val_loss)
 
 tools.print_time()
-#% test model
+#%% test model
 model.load_weights(modelsavefile) #model needs to be built first 
 params_test = params.copy()
 params_test['batch_size'] = 1

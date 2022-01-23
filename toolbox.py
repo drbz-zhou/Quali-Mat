@@ -120,11 +120,12 @@ def label2categorical(m_labels, numClass):
     return m_labels_exp
 
 
-def train_step(model, epoch, m_data_train, m_y_train, m_data_valid, m_y_valid, modelsavefile, Patience = 50):
+def train_step(model, epoch, m_data_train, m_y_train, m_data_valid, m_y_valid, modelsavefile, Patience = 50,
+               Batch_size = 32, weights_only=False, initial_learning_rate=0.001, logpath='../Outputs/Logs/'):
     cb_checkpoint = keras.callbacks.ModelCheckpoint(modelsavefile, monitor='val_accuracy', mode='max', verbose=1, save_best_only=True)
     cb_earlystop = keras.callbacks.EarlyStopping(patience=Patience, monitor='val_accuracy', verbose = 1, restore_best_weights=True )
-    history = model.fit( x = m_data_train, y = m_y_train, epochs = epoch, batch_size=50,
-              use_multiprocessing = True,
+    history = model.fit( x = m_data_train, y = m_y_train, epochs = epoch, batch_size=Batch_size,
+              #use_multiprocessing = True,
               validation_data = (m_data_valid, m_y_valid),
               callbacks=[cb_checkpoint, cb_earlystop],
               #callbacks=[cb_earlystop],  #sometimes can't save model because of h5 bug, early stop restore best weights
@@ -142,16 +143,16 @@ def lr_step_decay(epoch, lr, initial_learning_rate):
     return initial_learning_rate * math.pow(drop_rate, math.floor(epoch/epochs_drop))
 
 def lr_scheduler_exp(epoch, lr):
-    if epoch < 50:
+    if epoch < 5: #10
         return lr
-    elif epoch % 10 != 1:
+    elif epoch % 5 != 1: #10
         return lr
     else:
-        return lr * 0.5 #* math.exp(-0.1)
+        return lr * 0.2 #0.5 #* math.exp(-0.1)
     
 def train_gen(model, epoch, m_datagen_train, m_datagen_valid, modelsavefile, 
               Patience = 50, Batch_size = 32, weights_only=False, initial_learning_rate=0.001, logpath='../Outputs/Logs/'):
-    cb_learningrate=keras.callbacks.LearningRateScheduler(lr_scheduler_exp, verbose=1)
+    cb_learningrate=keras.callbacks.LearningRateScheduler(lr_scheduler_exp, verbose=0)
     cb_checkpoint = keras.callbacks.ModelCheckpoint(modelsavefile, monitor='val_accuracy', mode='max', 
                                                     verbose=1, save_weights_only=weights_only,save_best_only=True)
     cb_earlystop = keras.callbacks.EarlyStopping(patience=Patience, monitor='val_accuracy', verbose = 1, 
@@ -185,6 +186,7 @@ def train_gen_nodecay(model, epoch, m_datagen_train, m_datagen_valid, modelsavef
     return model, history
 
 def train_gen_autovalid(model, epoch, m_datagen_train, modelsavefile, Patience = 50, Batch_size = 32, weights_only=False):
+    cb_learningrate=keras.callbacks.LearningRateScheduler(lr_scheduler_exp, verbose=0)
     cb_checkpoint = keras.callbacks.ModelCheckpoint(modelsavefile, monitor='val_accuracy', mode='max', 
                                                     verbose=1, save_weights_only=weights_only,save_best_only=True)
     cb_earlystop = keras.callbacks.EarlyStopping(patience=Patience, monitor='val_accuracy', verbose = 1, restore_best_weights=True )
