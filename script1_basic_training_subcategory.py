@@ -19,6 +19,7 @@ from data_gen import DataGenerator_mem
 from sklearn.metrics import confusion_matrix
 import model_builder
 import data_parser as parser
+import matplotlib.pyplot as plt
  
 # setup GPU
 tools.tf_setup_GPU()
@@ -27,7 +28,7 @@ numClass = 47
 out_Session = 3
 plim = 13 # 7 for 6 people (64GB RAM), 13 for all 12 people (needs 128GB RAM), 2 for 1 person with quick test
 
-params = {'batch_size': 250, 'shuffle': True, 'n_classes': numClass}
+params = {'batch_size': 256, 'shuffle': True, 'n_classes': numClass}
 params['dim'] = (128, 64, 50)
 params['n_channels'] = 1
 params['datapath'] = '../Data/SessionCSV/'
@@ -106,7 +107,7 @@ for subcat in range( 1, 10 ): #subcategory  (1, 10)
         model = model_builder.build_Conv_Trans_w9(num_heads = 8, dff = 32, numClass = numClass, d_model = 32,
                          dropoutrate = 0.2, conv_filters = 5, conv_kernel = 3)
         
-    m_opt = keras.optimizers.Adam(learning_rate=0.0001)
+    m_opt = keras.optimizers.Adam(learning_rate=0.001)
     model.compile(optimizer=m_opt,
                   loss=keras.losses.BinaryCrossentropy(from_logits=True),
                   metrics=['accuracy'])
@@ -118,7 +119,7 @@ for subcat in range( 1, 10 ): #subcategory  (1, 10)
     val_loss = []
     epoch = 10000
     modelsavefile = '../Outputs/model_'+model_arch+'_'+'subcat_'+str(subcat)+'.h5'
-    patience= 40
+    patience= 50
     
     train_gen = DataGenerator_mem(train_list_ind, datadict=mDataDict, Meta_Ind=Meta_Ind, slicedict=mSliceDict,**params)
     valid_gen = DataGenerator_mem(valid_list_ind, datadict=mDataDict, Meta_Ind=Meta_Ind, slicedict=mSliceDict, **params)
@@ -150,4 +151,66 @@ for subcat in range( 1, 10 ): #subcategory  (1, 10)
             str(numClass) + '_LO' + str(out_Session)+'_'+'subcat_'+str(subcat))
     tools.plot_acc_loss(acc, val_acc, loss, val_loss, file_path = out_path + model_arch + '_' + \
             str(numClass) + '_LO' + str(out_Session)+'_'+'subcat_'+str(subcat))
-        
+    
+    #% plot failure examples
+    
+    figure = plt.figure(figsize=(32,20))
+    W = 10
+    H = 4
+    y_test = m_y_test+params['y_offset']
+    y_pred = np.argmax(m_y_pred, axis=1)+params['y_offset']
+    sample = 0
+    person = 1
+    for i in range(len(unique_labels)): #activity 1,48
+        A=unique_labels[i]
+        ind = np.where((y_pred != y_test) &
+                        (y_pred == A) &
+                        (Meta_Ind[np.array(test_list_ind)][:, 0] == person))[0]      #change persons  
+        print(str(A) + ' ' + str(len(ind)))
+        person = person+1
+        if len(ind)<1:
+            ind = np.where((y_pred != y_test) &
+                        (y_pred == A) )[0] 
+        if len(ind)>sample:
+            clip, label = parser.clip_from_metaindex_mem(ind[sample], mDataDict, Meta_Ind, mSliceDict, '../Data/SessionCSV/', '../Data/labels_50_10/', str(47))
+            print(Meta_Ind[np.array(test_list_ind)][ind[sample], :])
+        if len(ind)>10:
+            clip, label = parser.clip_from_metaindex_mem(ind[10], mDataDict, Meta_Ind, mSliceDict, '../Data/SessionCSV/', '../Data/labels_50_10/', str(47))
+            print(Meta_Ind[np.array(test_list_ind)][ind[10], :])
+        if len(ind)>0:
+            clip=np.swapaxes(clip,0,1)
+            sumFrame = np.max(clip, axis = 2)
+            axis = plt.subplot(H, W, i+1)
+            plt.imshow(sumFrame)
+            plt.tight_layout()
+            plt.subplots_adjust(hspace=.2, wspace=0.01)
+            plt.title('True:'+str(y_test[ind[sample]]) + ', Pred:'+str(y_pred[ind[sample]]) + ', ID'+str(Meta_Ind[np.array(test_list_ind[ind[sample]]), 0]),y=-0.12)
+            print(Meta_Ind[np.array(test_list_ind[ind[sample]]), 0])
+    for i in range(len(unique_labels)): #activity 1,48
+        A=unique_labels[i]
+        ind = np.where((y_pred != y_test) &
+                        (y_test == A) &
+                        (Meta_Ind[np.array(test_list_ind)][:, 0] == person))[0]      #change persons  
+        print(str(A) + ' ' + str(len(ind)))
+        if person == 12:
+            person = 0
+        person = person+1
+        if len(ind)<1:
+            ind = np.where((y_pred != y_test) &
+                        (y_test == A) )[0] 
+        if len(ind)>sample:
+            clip, label = parser.clip_from_metaindex_mem(ind[sample], mDataDict, Meta_Ind, mSliceDict, '../Data/SessionCSV/', '../Data/labels_50_10/', str(47))
+            print(Meta_Ind[np.array(test_list_ind)][ind[sample], :])
+        if len(ind)>10:
+            clip, label = parser.clip_from_metaindex_mem(ind[10], mDataDict, Meta_Ind, mSliceDict, '../Data/SessionCSV/', '../Data/labels_50_10/', str(47))
+            print(Meta_Ind[np.array(test_list_ind)][ind[10], :])
+        if len(ind)>0:
+            clip=np.swapaxes(clip,0,1)
+            sumFrame = np.max(clip, axis = 2)
+            axis = plt.subplot(H, W, i+W+1)
+            plt.imshow(sumFrame)
+            plt.tight_layout()
+            plt.subplots_adjust(hspace=.2, wspace=0.01)
+            plt.title('True:'+str(y_test[ind[sample]]) + ', Pred:'+str(y_pred[ind[sample]]) + ', ID'+str(Meta_Ind[np.array(test_list_ind[ind[sample]]), 0]),y=-0.12)
+            print(Meta_Ind[np.array(test_list_ind[ind[sample]]), 0])
+    plt.savefig('../Outputs/DataSamples/false_examples_cat_'+str(subcat)+'.png')

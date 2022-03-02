@@ -25,7 +25,7 @@ from datetime import datetime
 # setup GPU
 tools.tf_setup_GPU()
 #tools.tf_mem_patch()
-numClass = 47
+numClass = 9
 plim = 13 # 7 for 6 people (64GB RAM), 13 for all 12 people (needs 128GB RAM), 2 for 1 person with quick test
 
 params = {'batch_size': 512, 'shuffle': True, 'n_classes': numClass}
@@ -69,7 +69,7 @@ acc_all = np.zeros((plim-1))
 acc_all_re = np.zeros((plim-1))
 f_recali = True
 #%% leave person out
-for out_Person in range(1,plim):#(1,plim):
+for out_Person in range(3,plim):#(1,plim):
     # select the training and testing indexes based on person, recording and class conditions
     #train_list = np.where( (Meta_Ind[:,1]!=out_Session) & (Meta_Ind[:,0]<plim) )[0].tolist()
     #test_list = np.where( (Meta_Ind[:,1]==out_Session)  & (Meta_Ind[:,0]<plim) )[0].tolist()
@@ -84,6 +84,7 @@ for out_Person in range(1,plim):#(1,plim):
     test_list_ind = np.array(test_list)[test_subind].tolist()
     
     tools.print_time()
+    print("Leave out person: "+str(out_Person))
     #for i in range(10):
     #    mDataExample=train_gen.__getitem__(i)
     #    tools.print_time()
@@ -127,9 +128,9 @@ for out_Person in range(1,plim):#(1,plim):
     val_acc = []
     loss = []
     val_loss = []
-    epoch = 30
+    epoch = 100
     modelsavefile = '../Outputs/model_'+model_arch+'_'+str(numClass)+'.h5'
-    patience= 15
+    patience= 10
     
     #%
     train_gen = DataGenerator_mem(train_list_ind, datadict=mDataDict, Meta_Ind=Meta_Ind, slicedict=mSliceDict,**params)
@@ -177,24 +178,25 @@ for out_Person in range(1,plim):#(1,plim):
             str(numClass) + '_LO' + str(out_Person)+'_')
     cm_all[:,:,out_Person-1]=cm
     acc_all[out_Person-1]=acc_test
-    #%%
+    #%
     if f_recali: 
         train_list_1 = np.where( (Meta_Ind[:,0]==out_Person) &  # first session from person
                               (Meta_Ind[:,1]==1) )[0].tolist()
         train_list_2 = np.where( (Meta_Ind[:,0]!=out_Person) &  # the rest persons
                           (Meta_Ind[:,0]<plim) )[0].tolist()
         train_out_sub, train_sub_2 = tools.train_valid_split_jump(np.array(train_list_2), 5) # 20% of the rest of the people  
-        train_list = train_list_1+train_sub_2.tolist()
+        train_list = train_list_1+np.array(train_list_2)[train_sub_2].tolist()
         test_list = np.where( (Meta_Ind[:,0]==out_Person)  & 
                              (Meta_Ind[:,1]>1) )[0].tolist()
-        train_subind, valid_subind = tools.train_valid_split_jump(np.array(train_list), 5)  #train_list, too small may not have valid data
-        train_list_ind = np.array(train_list)[train_subind].tolist()
+        #train_subind, valid_subind = tools.train_valid_split_jump(np.array(train_list_2), 5)  #train_list, too small may not have valid data
+        test_subind, valid_subind = tools.train_valid_split_jump(np.array(test_list), 5)  #train_list, too small may not have valid data
+        train_list_ind = train_list#np.array(train_list)[train_subind].tolist()
         valid_list_ind = np.array(test_list)[valid_subind].tolist()  #train_list
-        test_list_ind = test_list#%np.array(test_list)[test_subind].tolist()
+        test_list_ind = np.array(test_list)[test_subind].tolist()
         
         epoch = 50
         modelsavefile = '../Outputs/model_'+model_arch+'_'+str(numClass)+'.h5'
-        patience= 10
+        patience= 15
         m_ini_learning_rate = 0.0005
         m_opt = keras.optimizers.Adam(learning_rate=m_ini_learning_rate)
         model.compile(optimizer=m_opt,

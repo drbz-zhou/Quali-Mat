@@ -27,7 +27,7 @@ tools.tf_setup_GPU()
 numClass = 47
 plim = 13 # 7 for 6 people (64GB RAM), 13 for all 12 people (needs 128GB RAM), 2 for 1 person with quick test
 
-params = {'batch_size': 150, 'shuffle': True, 'n_classes': numClass}
+params = {'batch_size': 256, 'shuffle': True, 'n_classes': numClass}
 params['dim'] = (128, 64, 50)
 params['n_channels'] = 1
 params['datapath'] = '../Data/SessionCSV/'
@@ -64,7 +64,7 @@ for P in range(1,plim):
         
 #%% leave session out
 cm_all = np.zeros( (numClass, numClass, 3) )
-for out_Session in range(1,4):
+for out_Session in range(3,4): # (1,4)
     # select the training and testing indexes based on person, recording and class conditions
     #train_list = np.where( (Meta_Ind[:,1]!=out_Session) & (Meta_Ind[:,0]<plim) )[0].tolist()
     #test_list = np.where( (Meta_Ind[:,1]==out_Session)  & (Meta_Ind[:,0]<plim) )[0].tolist()
@@ -122,9 +122,9 @@ for out_Session in range(1,4):
     val_acc = []
     loss = []
     val_loss = []
-    epoch = 1000
+    epoch = 100
     modelsavefile = '../Outputs/model_'+model_arch+'_'+str(numClass)+'.h5'
-    patience= 100
+    patience= 50
     
     #%
     train_gen = DataGenerator_mem(train_list_ind, datadict=mDataDict, Meta_Ind=Meta_Ind, slicedict=mSliceDict,**params)
@@ -162,6 +162,13 @@ for out_Session in range(1,4):
     m_y_pred = model.predict(test_gen)
     acc_test = sum(m_y_test == np.argmax(m_y_pred, axis=1)) / m_y_test.shape[0]
     
+    now = datetime.now()
+    date_time = now.strftime("%m%d%H%M")
+    m_y_pred_arr = np.argmax(m_y_pred, axis=1)
+    np.save(out_path + model_arch + '_y_pred-'+date_time+'.npy', m_y_pred_arr)
+    np.save(out_path + model_arch + '_y_test-'+date_time+'.npy', m_y_test)
+    np.save(out_path + model_arch + '_test_list_ind-'+date_time+'.npy', test_list_ind)
+
     cm = confusion_matrix(m_y_test, np.argmax(m_y_pred, axis=1))
     print(acc_test)
     print(cm)
@@ -177,4 +184,3 @@ date_time = now.strftime("%m%d%H%M")
 np.save(out_path + model_arch + '_CMall-'+date_time+'.npy', cm_all)
 tools.plot_confusion_matrix(cm_sum, range(1, numClass+1), file_path = out_path + model_arch + '_' + \
         str(numClass) + '_LSOsum_')
-

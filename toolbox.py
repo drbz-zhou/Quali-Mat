@@ -143,12 +143,12 @@ def lr_step_decay(epoch, lr, initial_learning_rate):
     return initial_learning_rate * math.pow(drop_rate, math.floor(epoch/epochs_drop))
 
 def lr_scheduler_exp(epoch, lr):
-    if epoch < 5: #10
+    if epoch < 10: #10 5
         return lr
-    elif epoch % 5 != 1: #10
+    elif epoch % 10 != 1: #10
         return lr
     else:
-        return lr * 0.2 #0.5 #* math.exp(-0.1)
+        return lr * 0.5 #0.5 #* math.exp(-0.1) 0.2
     
 def train_gen(model, epoch, m_datagen_train, m_datagen_valid, modelsavefile, 
               Patience = 50, Batch_size = 32, weights_only=False, initial_learning_rate=0.001, logpath='../Outputs/Logs/'):
